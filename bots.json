@@ -1,0 +1,12 @@
+{
+  "counter": 12,
+  "bots": [
+    {
+      "id": "BOT1",
+      "phoneNumber": "918780784926",
+      "connected": true,
+      "disabled": false,
+      "tgChatId": "8588629743"
+    }
+  ]
+}
