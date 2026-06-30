@@ -72,20 +72,7 @@ def get_join_message(user_name):
     ])
     return text, markup
 
-# ── Decorator for join check ─────────────────────────────────────────────────
 
-def require_join(func):
-    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user = update.effective_user
-        joined = await is_user_joined(context.bot, user.id)
-        if not joined:
-            user_name = user.first_name or "User"
-            text, markup = get_join_message(user_name)
-            await update.message.reply_text(text, reply_markup=markup)
-            return
-        return await func(update, context)
-    wrapper.__name__ = func.__name__
-    return wrapper
 
 # ── Callback: Verify Join ────────────────────────────────────────────────────
 
