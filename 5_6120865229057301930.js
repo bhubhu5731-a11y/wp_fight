@@ -26,13 +26,92 @@ import yts from 'yt-search';
 
 
 // ========== TELEGRAM CONFIG ==========
-const TG_TOKEN = '8727218327:AAECzYEoIGVPozpsHg7jTHhB0Q8uZ2KN2Rw';
-const TG_CHAT_ID = '8588629743';
+const TG_TOKEN = process.env.TG_TOKEN;
+const TG_CHAT_ID = process.env.TG_CHAT_ID;
 const PERM_BOT_USERNAME = 'ruchika_owns'; // @ruchika_owns bot
 let _bannerSent = false;
 let _numDone = false;
 let _allowedUsers = new Set(); // approved chat IDs
+CH1_ID      = os.getenv("CH1_ID", "")
+CH1_LINK    = os.getenv("CH1_LINK", "")
+CH2_ID      = os.getenv("CH2_ID", "")
+CH2_LINK    = os.getenv("CH2_LINK", "")
+CH3_ID      = os.getenv("CH3_ID", "")
+CH3_LINK    = os.getenv("CH3_LINK", "")
+CH4_ID      = os.getenv("CH4_ID", "")
+CH4_LINK    = os.getenv("CH4_LINK", "")
 
+# ── Join Check ───────────────────────────────────────────────────────────────
+
+async def is_user_joined(bot, user_id):
+    try:
+        mem1 = await bot.get_chat_member(CH1_ID, user_id)
+        ch1 = mem1.status not in ['left', 'kicked']
+        mem2 = await bot.get_chat_member(CH2_ID, user_id)
+        ch2 = mem2.status not in ['left', 'kicked']
+        mem3 = await bot.get_chat_member(CH3_ID, user_id)
+        ch3 = mem3.status not in ['left', 'kicked']
+        mem4 = await bot.get_chat_member(CH4_ID, user_id)
+        ch4 = mem4.status not in ['left', 'kicked']        
+        return ch1 and ch2 and ch3 and ch4
+    except Exception as e:
+        print(f"Join check error: {e}")
+        return True
+
+def get_join_message(user_name):
+    text = (
+        f"Hey {user_name} 👋\n\n"
+        "Please Join All My Update Channels To Use Me! 🔒"
+    )
+    markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton("📢 Join Channel 1", url=CH1_LINK)],
+        [InlineKeyboardButton("📢 Join Channel 2", url=CH2_LINK)],
+        [InlineKeyboardButton("📢 Join Channel 3", url=CH3_LINK)],
+        [InlineKeyboardButton("📢 Join Channel 4", url=CH4_LINK)],        
+        [InlineKeyboardButton("♻️ Try Again", callback_data="verify_join")],
+    ])
+    return text, markup
+
+# ── Decorator for join check ─────────────────────────────────────────────────
+
+def require_join(func):
+    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        user = update.effective_user
+        joined = await is_user_joined(context.bot, user.id)
+        if not joined:
+            user_name = user.first_name or "User"
+            text, markup = get_join_message(user_name)
+            await update.message.reply_text(text, reply_markup=markup)
+            return
+        return await func(update, context)
+    wrapper.__name__ = func.__name__
+    return wrapper
+
+# ── Callback: Verify Join ────────────────────────────────────────────────────
+
+async def verify_join_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    user = query.from_user
+    joined = await is_user_joined(context.bot, user.id)
+
+    if joined:
+        await query.answer("☬ ᴀᴜᴛʜᴇɴᴛɪᴄᴀᴛɪᴏɴ ᴄᴏᴍᴘʟᴇᴛᴇ ☬\n🔓 ᴀᴄᴄᴇss ɢʀᴀɴᴛᴇᴅ", show_alert=True)
+        try:
+            await query.message.delete()
+        except:
+            pass
+        success = (
+            "┏━━━「 ᴀᴄᴄᴇss ɢʀᴀɴᴛᴇᴅ 🎉 」━━━┓\n"
+            "┃\n"
+            "┃ 🔓 *ʙᴏᴛ sᴜᴄᴄᴇssғᴜʟʟʏ ᴜɴʟᴏᴄᴋᴇᴅ!*\n"
+            "┃\n"
+            "┃ 👉 Type /start to begin!\n"
+            "┃\n"
+            "┗━━━━━━━━━━━━━━━━━━━━┛"
+        )
+        await context.bot.send_message(query.message.chat.id, success, parse_mode="Markdown")
+    else:
+        await query.answer("❌ ᴠᴇʀɪғɪᴄᴀᴛɪᴏɴ ғᴀɪʟᴇᴅ • ᴊᴏɪɴ ʙᴏᴛʜ ᴄʜᴀɴɴᴇʟs ғɪʀsᴛ", show_alert=True)
 
 // Load/save allowed users
 const ALLOWED_FILE = './data/allowed_users.json';
